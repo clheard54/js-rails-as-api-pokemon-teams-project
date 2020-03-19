@@ -1,3 +1,4 @@
+
 const BASE_URL = "http://localhost:3000"
 const TRAINERS_URL = `${BASE_URL}/trainers`
 const POKEMONS_URL = `${BASE_URL}/pokemons`
@@ -30,7 +31,7 @@ document.addEventListener("DOMContentLoaded", function(){
   function makeTrainer(trainer){
       let div = document.createElement('div')
       div.className = 'card';
-      div['data-id'] = trainer.id;
+      div.id = trainer.id;
 
       const name = document.createElement('p');
       name.textContent = trainer.name;
@@ -40,7 +41,6 @@ document.addEventListener("DOMContentLoaded", function(){
       addButton['data-trainer-id'] = trainer.id
 
       addButton.addEventListener("click", function(){
-          if (!trainer.pokemons || trainer.pokemons.length <6){
             fetch(POKEMONS_URL, {
                 method: "POST",
                 headers: {
@@ -48,41 +48,55 @@ document.addEventListener("DOMContentLoaded", function(){
                     Accept: 'application/json'
                 },
                 body: JSON.stringify({
-                    trainer_id: trainer.id
+                    "trainer_id": trainer.id
                 })
             })
             .then(resp => resp.json())
             .then(data => {
-                addPokemonListItem(data)
+                if (!pokeList.children || pokeList.children.length < 6){
+                addPokemonListItem(data)}
             })
-        }
     })
     
     let pokeList = document.createElement('ul')   
     if(!!trainer.pokemons) {
       trainer.pokemons.forEach(pokemon => {
-          addPokemonListItem(pokemon)
-      })
+        if (!pokeList.children || pokeList.children.length < 6){
+        addPokemonListItem(pokemon)}
+    })
     }
+
+    function addPokemonListItem(pokemon){
+        let li = document.createElement('li');
+        li.textContent = `${pokemon.nickname} (${pokemon.species})`
+        li.id = pokemon.id
+        let releaseBtn = document.createElement('button');
+        releaseBtn.className = 'release'
+        releaseBtn.textContent = "Release"
+        
+        releaseBtn.addEventListener("click", function(){
+            const deleter = document.getElementById(`${pokemon.id}`)
+            console.log(deleter)
+            fetch(`${POKEMONS_URL}/${pokemon.id}`, {
+                method: "DELETE",
+            })
+            .then(resp => resp.json())
+            .then(() => deleter.parentElement.removeChild(deleter));
+        })
+    
+        li.appendChild(releaseBtn)
+        pokeList.appendChild(li)
+    }
+
+
 
       div.appendChild(name);
       div.appendChild(addButton);
       div.appendChild(pokeList);
 
-      return div
+      
+    return div
   }
-
-
-  function addPokemonListItem(pokemon){
-    let li = document.createElement('li');
-    li.textContent = `${pokemon.nickname} (${pokemon.species})`
-    let releaseBtn = document.createElement('button');
-    releaseBtn.classname = 'release'
-    releaseBtn.textContent = "Release"
-    releaseBtn['data-pokemon-id'] = pokemon.id
-    li.appendChild(releaseBtn)
-    pokeList.appendChild(li)
-}
 
 
 })
